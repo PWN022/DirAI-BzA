@@ -1,7 +1,8 @@
 *.egg-info/
 __pycache__/
 *.pyc
-.env
+.env.*
+!.env.example
 *.egg-info/
 __pycache__/
 *.pyc
