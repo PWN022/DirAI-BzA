@@ -320,6 +320,9 @@ def scan_targets(base_url, path_list, output_file='data/scan_results.csv',
             ext = '.' + p.split('.')[-1]
             if ext in extensions:
                 filtered_paths.append(p)
+            else:
+                # 保留原路径（通用敏感文件如 robots.txt/swagger-ui.html），不追加框架变体
+                filtered_paths.append(p)
         else:
             filtered_paths.append(p)
             for ext in extensions:
@@ -428,7 +431,7 @@ def scan_targets(base_url, path_list, output_file='data/scan_results.csv',
                                             ai_generated_count += 1
                                             future_new = executor.submit(scan_single, v)
                                             future_to_path[future_new] = v
-                                            total = len(pending_paths) + scanned_count
+                                total = len(pending_paths) + scanned_count
                                 if new_count > 0:
                                     print(f"\n  + 规则生成 {new_count} 个新路径 (总计: {ai_generated_count})", end='')
                         
@@ -445,8 +448,8 @@ def scan_targets(base_url, path_list, output_file='data/scan_results.csv',
                                                 ai_generated_count += 1
                                                 future_new = executor.submit(scan_single, v)
                                                 future_to_path[future_new] = v
-                                                total = len(pending_paths) + scanned_count
                                                 print(f"\n  + AI 推理新路径: {v}", end='')
+                                        total = len(pending_paths) + scanned_count
                             except Exception as e:
                                 pass
         
@@ -481,16 +484,30 @@ def scan_targets(base_url, path_list, output_file='data/scan_results.csv',
         sensitive_findings, checked = scan_sensitive_files(base_url, found_paths, timeout=timeout)
         
         if sensitive_findings:
-            print(f"\n[!] 发现 {len(sensitive_findings)} 条敏感信息泄露:")
-            for f in sensitive_findings[:10]:
-                print(f"    [{f['severity']}] {f['desc']}: {f['value']} ({f['url']})")
-            
-            os.makedirs('data', exist_ok=True)
-            with open('data/sensitive_findings.json', 'w') as f:
-                json.dump(sensitive_findings, f, indent=2)
-            print(f"敏感信息详情已保存到 data/sensitive_findings.json")
-        else:
-            print(f"\n[+] 未发现敏感信息泄露 (已检查 {checked} 个文件)")
+            # AI 二次确认降低误报
+            if ai and ai.enabled:
+                confirmed = []
+                for f in sensitive_findings:
+                    result = ai.analyze_sensitive(f['value'], f['url'])
+                    if result and '是否敏感: 否' in result:
+                        print(f"    [AI] 排除误报: {f['desc']} ({f['url']})")
+                    else:
+                        confirmed.append(f)  # API失败时保留，宁可误报不可漏报
+                if len(confirmed) < len(sensitive_findings):
+                    print(f"    [AI] 确认 {len(confirmed)}/{len(sensitive_findings)} 条，排除 {len(sensitive_findings) - len(confirmed)} 条误报")
+                sensitive_findings = confirmed
+
+            if sensitive_findings:
+                print(f"\n[!] 发现 {len(sensitive_findings)} 条敏感信息泄露:")
+                for f in sensitive_findings[:10]:
+                    print(f"    [{f['severity']}] {f['desc']}: {f['value']} ({f['url']})")
+
+                os.makedirs('data', exist_ok=True)
+                with open('data/sensitive_findings.json', 'w') as f:
+                    json.dump(sensitive_findings, f, indent=2)
+                print(f"敏感信息详情已保存到 data/sensitive_findings.json")
+            else:
+                print(f"\n[+] 未发现敏感信息泄露 (已检查 {checked} 个文件)")
 
     # ===== JS路径提取 =====
     if results:

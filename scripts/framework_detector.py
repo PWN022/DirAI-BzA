@@ -73,6 +73,7 @@ class FrameworkDetector:
             pass
         
         probe_paths = ['/admin', '/login', '/api', '/actuator/health', '/index.php']
+        print("  探测框架特征路径...")
         for path in probe_paths:
             try:
                 url = urljoin(self.target_url, path)
@@ -150,10 +151,10 @@ php
             scores['nodejs'] += 3
         
         # Python
-        if 'csrftoken' in content or 'sessionid' in content:
-            scores['python'] += 2
         if 'django' in content.lower() or 'flask' in content.lower():
             scores['python'] += 3
+        if 'csrftoken' in content:
+            scores['python'] += 2
         
         # .NET
         if 'ASP.NET_SessionId' in content or '__VIEWSTATE' in content:

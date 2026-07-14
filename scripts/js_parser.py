@@ -73,20 +73,20 @@ def extract_paths_from_js(content, base_url):
     
     return list(full_paths)
 
-def scan_js_for_paths(base_url, found_paths, timeout=3):
+def scan_js_for_paths(base_url, found_paths, timeout=3, max_js_files=20):
     """扫描所有JS文件，提取其中的路径"""
     all_extracted = []
     checked_js = 0
-    
+
     # 筛选JS文件
     js_paths = [p for p in found_paths if p.endswith('.js') or '.js?' in p]
-    
+
     if not js_paths:
         return [], 0
-    
+
     print(f"\n[+] 开始从JS文件中提取路径: 发现 {len(js_paths)} 个JS文件")
-    
-    for path in js_paths[:20]:  # 限制最多检查20个JS文件
+
+    for path in js_paths[:max_js_files]:
         full_url = urljoin(base_url, path)
         try:
             resp = requests.get(full_url, timeout=timeout,

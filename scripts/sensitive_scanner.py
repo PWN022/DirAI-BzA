@@ -76,7 +76,7 @@ def extract_sensitive_info(content, url):
                 'type': name,
                 'severity': rule['severity'],
                 'desc': rule['desc'],
-                'value': matched_value[:50] + '...' if len(matched_value) > 50 else matched_value,
+                'value': matched_value,
                 'url': url
             })
     
