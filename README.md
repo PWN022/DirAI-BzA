@@ -199,11 +199,15 @@ Python 3.8+、requests、beautifulsoup4、pandas、scikit-learn、xgboost、jobl
 
 ## 常见问题
 
-AI功能不生效时检查是否配置了API Key（cat .env），或测试API是否有效（python -c "from [scripts.ai](https://scripts.ai/)_analyzer import AIAnalyzer; ai = AIAnalyzer(); print('OK' if ai.enabled else 'FAIL')"）。
+AI功能不生效时检查是否配置了API Key（cat .env），或测试API是否有效。
 
 扫描速度慢时可增加并发线程数（--workers 30）或减少超时时间（--timeout 2）。
 
-404缓存导致的问题可清除缓存重新扫描（rm -f data/url_cache.json && dirai scan -u [https://example.com/](https://example.com/) --no-cache）。
+404缓存导致的问题可清除缓存重新扫描
+
+```
+rm -f data/url_cache.json && dirai scan -u https://example.com/ --no-cache
+```
 
 ## License
 
