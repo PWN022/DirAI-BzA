@@ -1,8 +1,20 @@
 import os
 import json
-from dotenv import load_dotenv
+from pathlib import Path
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+# 优先从项目根目录加载 .env（确保在任何目录运行都能找到配置）
+_project_root = Path(__file__).resolve().parent.parent
+_env_file = _project_root / '.env'
+if _env_file.exists():
+    load_dotenv(_env_file)
+else:
+    # 回退到默认搜索（当前目录及父目录）
+    load_dotenv(find_dotenv(usecwd=True))
+    if not os.environ.get('OPENAI_API_KEY'):
+        print(f"[!] 未找到 .env 配置文件")
+        print(f"    请复制 .env.example 为 .env 并填入你的 API Key:")
+        print(f"    cp {_project_root / '.env.example'} {_env_file}")
 
 class AIAnalyzer:
     def __init__(self):
